@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Book</title>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+</head>
+<body>
+<form id="add-book">
+    <table>
+        <tr>
+            <td>Book Name</td>
+            <td><input type="text" id="name" placeholder="Nhap ten"></td>
+        </tr>
+        <tr>
+            <td>Price</td>
+            <td><input type="text" id="price" placeholder="Nhap gia"></td>
+        </tr>
+        <tr>
+            <td>Author</td>
+            <td><input type="text" id="author" placeholder="Nhap tac gia"></td>
+        </tr>
+        <tr>
+            <td>Category</td>
+            <td>
+                <select name="category" id="category">
+                    <th:block th:each="c:${categories}" >
+                        <option th:value="${c.id}" th:text="${c.name_category}"></option>
+                    </th:block>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td>Avatar</td>
+            <td><input type="file" name="avatar" id="avatar"></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td><input type="submit" value="Add New" onclick="addNewBook()"></td>
+        </tr>
+    </table>
+</form>
+<h1>BookList</h1>
+<table>
+    <tr>
+        <td>Book Name</td>
+        <td>Price</td>
+        <td>Author</td>
+        <td>Category</td>
+        <td>Avatar</td>
+        <td colspan="2"></td>
+    </tr>
+</table>
+<script>
+    function addNewBook(){
+        let name =$('#name').val();
+        let price =$('#price').val();
+        let author =$('#author').val();
+        let category =$('#category').val();
+        let avatar = $('#avatar').val();
+        let newBook = {
+            name: name,
+            price:price,
+            author:author,
+            category:{
+                id: category
+            },
+            avatar:avatar
+        };
+        $.ajax({
+            headers:{
+                'Accept' :'application/json',
+                'Content-Type' :'application/json',
+            },
+            type:"POST",
+            data: JSON.stringify(newBook),
+            url: "/book",
+            success: function (){
+                showBookList()
+            }
+        });
+        event.preventDefault();
+    }
+    function deleteBook(id){
+        $.ajax({
+            type:"DELETE",
+            url:`/book/${id}`,
+            success: function (){
+                showBookList()
+            }
+        })
+    }
+    function editBook(id){
+        let name = $('#name').val()
+        let price = $('#price').val()
+        let author = $('#author').val()
+        let category = $('#category').val()
+        let avatar = $('#avatar').val()
+        let existBook = {
+            name : name,
+            price : price,
+            author : author,
+            category : {
+                id : category
+            },
+            avatar : avatar
+        }
+        $.ajax({
+            headers: {
+                'Accepted' : 'application/json',
+                'Content-Type' :'application/json',
+            },
+            type:"PUT",
+            data: JSON.stringify(existBook),
+            url:`/book/${id}`,
+            success: function (){
+                showBookList()
+            }
+        })
+    }
+    function showBookList(){
+        $.ajax({
+            type:"GET",
+            url:"/book",
+            success:function (data){
+                   let content = '<tr>/n'+
+                             ' <td>Name</td>\n'  +
+                              '<td>Price</td>\n' +
+                              '<td>Author</td>\n' +
+                               '<td>Avatar</td>\n' +
+                               '<td>Category</td>\n' +
+                '</tr>';
+                   for (let i=0;i<data.length;i++){
+                       content +=getBook(data[i]);
+                   }
+                document.getElementById("bookList").innerHTML = content;
+            }
+        });
+    }
+    function getBook(book){
+        return `<tr>
+                          <td >${book.name}</td>
+                          <td >${book.price}</td>
+                          <td >${book.author}</td>
+                          <td >${book.avatar}</td>
+                          <td >${book.category}</td>`
+    }
+    function showEditForm(id){
+        let content = `<button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal" onclick="editBook(${id})">Update</button>`
+        document.getElementById("showModalButton").innerHTML = content;
+        $.ajax({
+            type:"GET",
+            url:`/book/${id}`,
+            success: function (book){
+                $('#name').val(book.name)
+                $('#price').val(book.price)
+                $('#author').val(book.author)
+                $('#category').val(book.category.name)
+                $('#avatar').val(book.avatar)
+            }
+        })
+    }
+    $(document).ready( showBookList())
+</script>
+</body>
+</html>
